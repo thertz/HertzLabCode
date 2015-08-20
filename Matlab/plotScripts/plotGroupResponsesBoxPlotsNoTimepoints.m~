@@ -1,0 +1,40 @@
+
+function [figInd,figHandles] = plotGroupResponsesBoxPlotsNoTimepoints(groupResponses,groupInds,antigenInds,AbType,figInd,fontSize)
+
+
+if(~exist('fontSize','var'))
+  fontSize = 12;
+end
+
+if(~exist('figInd','var'))
+  figInd = 1;
+end
+
+for i=1:length(groupResponses)
+
+  labels  = [];
+  respVec = [];
+  
+  for j=groupInds
+    respVec = [respVec sum(groupResponses(i).responseMat{j}(:,antigenInds),2)'];
+    labels = [labels ones(1,size(groupResponses(i).responseMat{j},1))*j ];
+  end
+  
+  figHandles(i) = figure(figInd);
+  h= notBoxPlot(respVec,labels,[],'sdline');
+  a = gca;
+  set(a,'Xtick',[1:length(groupInds)]);
+  set(a,'XtickLabel',groupResponses(i).groupNames(groupInds));
+  
+  
+  figInd = figInd + 1;
+
+  [pValue] = ranksum(respVec(labels==groupInds(1)),respVec(labels==groupInds(2)));
+  
+  a = gca;
+  set(a,'FontSize',fontSize);
+  title([AbType,' day ',groupResponses(i).time, ' p=',num2str(pValue)]);
+  
+  ylabel('MFI');
+
+end

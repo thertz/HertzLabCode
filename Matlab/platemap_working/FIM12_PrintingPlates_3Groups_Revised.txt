@@ -1,0 +1,73 @@
+												
+												
+Plate 1 - SIV ENV peptides at 1mg/ml				30 ul/well								
+												
+	1	2	3	4	5	6	7	8	9	10	11	12
+A	Vic_HA_1	Vic_HA_2	Vic_HA_3	Vic_HA_4	Vic_HA_5	Vic_HA_6	Vic_HA_7	Vic_HA_8	Vic_HA_9	Vic_HA_10	Vic_HA_11	Vic_HA_12
+B	Vic_HA_13	Vic_HA_14	Vic_HA_15	Vic_HA_16	Vic_HA_17	Vic_HA_18	Vic_HA_19	Vic_HA_20	Vic_HA_21	Vic_HA_22	Vic_HA_23	Vic_HA_24
+C	Vic_HA_25	Vic_HA_26	Vic_HA_27	Vic_HA_28	Vic_HA_29	Vic_HA_30	Vic_HA_31	Vic_HA_32	Vic_HA_33	Vic_HA_34	Vic_HA_35	Vic_HA_36
+D	Vic_HA_37	Vic_HA_38	Vic_HA_39	Vic_HA_40	Vic_HA_41	Vic_HA_42	Vic_HA_43	Vic_HA_44	Vic_HA_45	Vic_HA_46	Vic_HA_47	Vic_HA_48
+E	Vic_HA_49	Vic_HA_50	Vic_HA_51	Vic_HA_52	Vic_HA_53	Vic_HA_54	Vic_HA_55	Vic_HA_56	Vic_HA_57	Vic_HA_58	Vic_HA_59	Vic_HA_60
+F	Vic_HA_61	Vic_HA_62	Vic_HA_63	Vic_HA_64	Vic_HA_65	Vic_HA_66	Vic_HA_67	Vic_HA_68	Vic_HA_69	Vic_HA_70	Vic_HA_71	Vic_HA_72
+G	Vic_HA_73	Vic_HA_74	Vic_HA_75	Vic_HA_76	Vic_HA_77	Vic_HA_78	Vic_HA_79	Vic_HA_80	Vic_HA_81	Vic_HA_82	Vic_HA_83	Vic_HA_84
+H	Vic_HA_85	Vic_HA_86	Vic_HA_87	Vic_HA_88	Vic_HA_89	Vic_HA_90	Vic_HA_91	Vic_HA_92	Vic_HA_93	Vic_HA_94	Vic_HA_95	Vic_HA_96
+												
+												
+Plate 2 - SIV ENV peptides at 1mg/ml				30 ul/well								
+												
+	1	2	3	4	5	6	7	8	9	10	11	12
+A	Vic_HA_97	Vic_HA_98	Vic_HA_99	Vic_HA_100	Vic_HA_101	Vic_HA_102	Vic_HA_103	Vic_HA_104	Vic_HA_105	Vic_HA_106	Vic_HA_107	Vic_HA_108
+B	Vic_HA_109	Vic_HA_110	Vic_HA_111	Wis_HA_1	Wis_HA_2	Wis_HA_3	Wis_HA_4	Wis_HA_5	Wis_HA_6	Wis_HA_7	Wis_HA_8	Wis_HA_9
+C	Wis_HA_10	Wis_HA_11	Wis_HA_12	Wis_HA_13	Wis_HA_14	Wis_HA_15	Wis_HA_16	Wis_HA_17	Wis_HA_18	Wis_HA_19	Wis_HA_20	Wis_HA_21
+D	Wis_HA_22	Wis_HA_23	Wis_HA_24	Wis_HA_25	Wis_HA_26	Wis_HA_27	Wis_HA_28	Wis_HA_29	Wis_HA_30	Wis_HA_31	Wis_HA_32	Wis_HA_33
+E	Wis_HA_34	Wis_HA_35	Wis_HA_36	Wis_HA_37	Wis_HA_38	Wis_HA_39	Wis_HA_40	Wis_HA_41	Wis_HA_42	Wis_HA_43	Wis_HA_44	Wis_HA_45
+F	Wis_HA_46	Wis_HA_47	Wis_HA_48	Wis_HA_49	Wis_HA_50	Wis_HA_51	Wis_HA_52	Wis_HA_53	Wis_HA_54	Wis_HA_55	Wis_HA_56	Wis_HA_57
+G	Wis_HA_58	Wis_HA_59	Wis_HA_60	Wis_HA_61	Wis_HA_62	Wis_HA_63	Wis_HA_64	Wis_HA_65	Wis_HA_66	Wis_HA_67	Wis_HA_68	Wis_HA_69
+H	Wis_HA_70	Wis_HA_71	Wis_HA_72	Wis_HA_73	Wis_HA_74	Wis_HA_75	Wis_HA_76	Wis_HA_77	Wis_HA_78	Wis_HA_79	Wis_HA_80	Wis_HA_81
+												
+												
+Plate3 - SIV ENV peptides at 1mg/ml				30 ul/well								
+												
+	1	2	3	4	5	6	7	8	9	10	11	12
+A	Wis_HA_82	Wis_HA_83	Wis_HA_84	Wis_HA_85	Wis_HA_86	Wis_HA_87	Wis_HA_88	Wis_HA_89	Wis_HA_90	Wis_HA_91	Wis_HA_92	Wis_HA_93
+B	Wis_HA_94	Wis_HA_95	Wis_HA_96	Wis_HA_97	Wis_HA_98	Wis_HA_99	Wis_HA_100	Wis_HA_101	Wis_HA_102	Wis_HA_103	Wis_HA_104	Wis_HA_105
+C	Wis_HA_106	Wis_HA_107	Wis_HA_108	Wis_HA_109	Wis_HA_110	Wis_HA_111	Wis_HA_112	Wis_HA_113	Wis_HA_114	Cal_HA_1	Cal_HA_2	Cal_HA_3
+D	Cal_HA_4	Cal_HA_5	Cal_HA_6	Cal_HA_7	Cal_HA_8	Cal_HA_9	Cal_HA_10	Cal_HA_11	Cal_HA_12	Cal_HA_13	Cal_HA_14	Cal_HA_15
+E	Cal_HA_16	Cal_HA_17	Cal_HA_18	Cal_HA_19	Cal_HA_20	Cal_HA_21	Cal_HA_22	Cal_HA_23	Cal_HA_24	Cal_HA_25	Cal_HA_26	Cal_HA_27
+F	Cal_HA_28	Cal_HA_29	Cal_HA_30	Cal_HA_31	Cal_HA_32	Cal_HA_33	Cal_HA_34	Cal_HA_35	Cal_HA_36	Cal_HA_37	Cal_HA_38	Cal_HA_39
+G	Cal_HA_40	Cal_HA_41	Cal_HA_42	Cal_HA_43	Cal_HA_44	Cal_HA_45	Cal_HA_46	Cal_HA_47	Cal_HA_48	Cal_HA_49	Cal_HA_50	Cal_HA_51
+H	Cal_HA_52	Cal_HA_53	Cal_HA_54	Cal_HA_55	Cal_HA_56	Cal_HA_57	Cal_HA_58	Cal_HA_59	Cal_HA_60	Cal_HA_61	Cal_HA_62	Cal_HA_63
+												
+												
+Plate4 - SIV ENV peptides at 1mg/ml				30 ul/well								
+												
+	1	2	3	4	5	6	7	8	9	10	11	12
+A	Cal_HA_64	Cal_HA_65	Cal_HA_66	Cal_HA_67	Cal_HA_68	Cal_HA_69	Cal_HA_70	Cal_HA_71	Cal_HA_72	Cal_HA_73	Cal_HA_74	Cal_HA_75
+B	Cal_HA_76	Cal_HA_77	Cal_HA_78	Cal_HA_79	Cal_HA_80	Cal_HA_81	Cal_HA_82	Cal_HA_83	Cal_HA_84	Cal_HA_85	Cal_HA_86	Cal_HA_87
+C	Cal_HA_88	Cal_HA_89	Cal_HA_90	Cal_HA_91	Cal_HA_92	Cal_HA_93	Cal_HA_94	Cal_HA_95	Cal_HA_96	Cal_HA_97	Cal_HA_98	Cal_HA_99
+D	Cal_HA_100	Cal_HA_101	Cal_HA_102	Cal_HA_103	Cal_HA_104	Cal_HA_105	Cal_HA_106	Cal_HA_107	Cal_HA_108	Cal_HA_109	Cal_HA_110	Cal_HA_111
+E												
+F												
+G												
+H												
+												
+												
+"It is loaded with 96-well pipet arm in quadrants where A1 is 1 A2 is 193, B1 is 97, nothing in B2"												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												
+												

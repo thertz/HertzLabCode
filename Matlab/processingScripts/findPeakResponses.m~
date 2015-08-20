@@ -1,0 +1,12 @@
+
+function [peakResponses] = findPeakResponses(responseMatrix,threshold)
+
+% returns a cell array with all responses that are above a certain threshold for each row in the responseMatrix data
+
+if(~exist('threshold','var'))
+  threshold = 20000;
+end
+
+for i=1:size(responseMatrix,1)
+  peakResponses{i} = find(responseMatrix(i,:) > threshold);
+end

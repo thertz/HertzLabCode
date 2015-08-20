@@ -1,0 +1,48 @@
+
+%run the ADT prediction method
+function [] = ADTpredict(HLAFilename,seqFilename,outputFilename,pepLength,ADTPath,fastaFlag)
+
+if(~exist('ADTPath','var'))
+  ADTPath = '/Users/thertz/Work/MyScripts/matlabScripts/ThreadingScripts/';
+end
+
+if(~exist('pepLength','var'))
+  pepLength = 9;
+end
+
+addpath(genpath(ADTPath));
+
+if(fastaFlag)
+  Seq = fastaread(seqFilename);
+else  
+  fd = fopen(seqFilename,'r');
+  C = textscan(fd,'%s');
+  Seq.Sequence = cell2mat(C{1});
+  fclose(fd);
+end
+ 
+fd = fopen(HLAFilename,'r');
+[C] = textscan(fd,'%s\n');
+fclose(fd);
+
+adtHLAs = strrep(C{1},'*','_');
+HLAs    = C{1};
+
+
+[bindingEnergies] = computeThreadingModelEnergies(adtHLAs,Seq.Sequence,pepLength);
+
+fopen(outputFilename,'w')
+for i=1:size(bindingEnergies,2)
+  fprintf(fd,'%s\t',HLAs{i});
+end
+fprintf(fd,'\n');
+
+for i=1:size(bindingEnergies,1)
+    for j=1:size(bindingEnergies,2)
+      fprintf(fd,'%.3f\t',bindingEnergies(i,j));
+    end
+    fprintf(fd,'\n');
+end
+fclose(fd);
+
+quit
