@@ -5,6 +5,7 @@ is for a given project. The script can load data from multiple experiments, so n
 for every run, just for every project.
 
 To create new project files save as changing description, then search < > filling in with the appropriate info.
+updated to allow single BSA sample
 """
 from __future__ import division, print_function
 from scipy import io
@@ -21,18 +22,17 @@ import statsmodels.api as sm
 import amplotlib as amp
 
 # General parameters
-cluster_plot_flag = True;
-plot_flag = True;
-save_flag = True;
+cluster_plot_flag = True
+plot_flag = False
+save_flag = False
 plt.close('all') # close all figures
 
 #-------------------------------------------------------------------------------------------------------------------------------------
 # project specific parameters - this is for H7N9, not relevant for other projects
 #-------------------------------------------------------------------------------------------------------------------------------------
-# ROOT_PATH = '/Users/thertz/Dropbox/HertzLab/'
-ROOT_PATH = 'C:/HertzLab/'
+ROOT_PATH = '/Users/thertz/Dropbox/HertzLab/'
 SAVE_PATH = ROOT_PATH + 'ArrayData/Influenza/H7N9/'
-FIG_PATH = ROOT_PATH + 'ArrayData/Influenza/H7N9/TestFigures/'
+FIG_PATH = ROOT_PATH + 'ArrayData/Influenza/H7N9/AnatProject/'
 
 # names of HA and NA proteins that are on the array. the prot_strs are the names for figure plotting
 prot_names = ['SHA_ha', 'SHA_na', 'Cal_ha', 'Cal_na']
@@ -43,14 +43,14 @@ arr_summary_stats = ['H7_mag', 'N9_mag', 'H1_mag', 'N1_mag']
 # labels of experimental groups
 #exp_groups    = ['Vac', 'AS03', 'MF59', 'PBS']; # types of adjuvants used on both Obese and WT mice
 #exp_group_prefixes = ['WT_pre_', 'Ob_pre_', 'WT_post_', 'Ob_post_']
-
+ 
 exp_groups = ['Normal', 'Obese']
 exp_group_prefixes = ['Obese_', 'Normal_', 'BSA']
 
 #-------------------------------------------------------------------------------------------------------------------------------------
 # Parameters that must be set - Paths, dates etc. These need to be setup. As more dates are added simply add these to the list here
 #-------------------------------------------------------------------------------------------------------------------------------------
-project_name = 'H7N9'
+project_name = 'H7N9';
 pathogen_name = 'Influenza'
 
 save_path = os.path.join(ROOT_PATH, 'ArrayData', pathogen_name, project_name)
@@ -59,18 +59,18 @@ load_path = save_path
 
 # Dates of experiments, each one is a directory where GPR files are saved.
 # multiple dates can be entered, but must have a corresponding prefix
-experiment_dates = ['06_10_2015']  #['08_21_2014', '08_22_2014', '08_25_2014', '09_04_2014', '09_05_2014']; 
+experiment_dates = ['06_03_2015'] #['08_21_2014', '08_22_2014', '08_25_2014', '09_04_2014', '09_05_2014']; 
 
 # all slides and slideToSampleMapping file for each date have the exact same filePrefix
-exp_prefix = [None]*len(experiment_dates)  # initalize empty list of size experiment_dates
+exp_prefix = [None]*len(experiment_dates) # initalize empty list of size experiment_dates
 for i, exp in enumerate(experiment_dates):
-    exp_str = exp.replace('20', '')  # strip away the 20 from the year part of the date
-    exp_prefix[i] = "".join([project_name, '_', exp_str])
+  exp_str = exp.replace('20', '') # strip away the 20 from the year part of the date
+  exp_prefix[i] = "".join([project_name, '_', exp_str])
 
 #-------------------------------------------------------------------------------
 # Additional parameters - project specific
 #-------------------------------------------------------------------------------
-num_arrays = 2  # number of arrays on each slide.
+num_arrays = 2;  # number of arrays on each slide.
 type_flag  = 'median' # uses the median over replicates of an antigen. Can also be 'mean'
 color_flags = ['635']
 color_tags = ['IgG']
@@ -116,21 +116,6 @@ for i, exp in enumerate(experiment_dates):
     ptids = [matstruct.ptids[0][i][0] for i in np.arange(matstruct.ptids[0].shape[0])]
     group_names = [matstruct.groupNames[0][i][0] for i in np.arange(matstruct.ptids[0].shape[0])]
     
-    # # hack hack hack
-    # ptids = []
-    # for g in ptids1:
-    #     if g == 'NC_AS':           
-    #         ptids.append(u'BSA')
-    #     else:
-    #         ptids.append(g.replace('_AS', ''))
-
-    # group_names = []
-    # for g in group_names1:
-    #     if g == 'NC_AS':           
-    #         group_names.append(u'BSA')
-    #     else:
-    #         group_names.append(g.replace('_AS', ''))
-
     res = matstruct.responseMatrix[0][0]
     antigens = [matstruct.antigenNames[i][0][0] for i in np.arange(matstruct.antigenNames.shape[0])]
 

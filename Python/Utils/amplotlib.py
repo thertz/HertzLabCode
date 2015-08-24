@@ -9,6 +9,7 @@ import scipy.cluster.hierarchy as sch
 import scipy.stats
 import numpy as np
 import matplotlib as mpl
+import seaborn as sbn
 import pylab
 import itertools
 import pdb as pdb
@@ -17,8 +18,26 @@ __all__ = ['plot_linear_corr', 'plot_longitudinal_responses_by_ptid', 'plot_resp
 
 
 def plot_linear_corr(x, y, x_label=None, y_label=None, title_str=None):
-    """plot linear correlation of x vs. y, including linear regression line overlaid"""
+    """
+    plot linear correlation of x vs. y, including linear regression line overlaid
 
+    Parameters:
+    ----------
+    x: np.ndarray
+        first data vector
+    y: np.ndarray
+        second data vector
+    x_label: string
+        label of x axis
+    y_label: string
+        label of y axis
+    title_str: string | None (default)
+        title of plot.
+    
+    Returns:
+    -------
+    f : figure handle
+    """
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
     line = slope * x + intercept
     f = plt.figure()
@@ -30,12 +49,149 @@ def plot_linear_corr(x, y, x_label=None, y_label=None, title_str=None):
     if title_str is None:
         plt.title("r = {:.2f}, p = {:.4f}".format(r_value, p_value))
     else:
-        plt.title(title_str + " r = {:.2f}, p = {:.4f}".format(r_value,p_value))
+        plt.title(title_str + " r = {:.2f}, p = {:.4f}".format(r_value, p_value))
     return f
 
 
-def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=None, plot_type='line', subplot_flag=False):
-    """plot responses of a single ptid from longitudinal timepoints
+def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplot_flag=False):
+    """
+    plot responses of a set of ptids. Can be used for reproducibility comparisons.
+    
+    Parameters:
+    ----------
+    resp_mat : np.ndarray, or pd.DataFrame
+        antigen array responses where each row corresponds to responses for a single ptid
+    ptid_labels : [ List | None (default)]
+        ptid ids for plotting (optional)
+    plot_type : ['line' (default) | 'bar']
+        type of plot used to present data
+    subplot_flag : [True | False]
+        if True plot each ptid in a different subplot, else plot all on a single plot.
+
+    Returns:
+    -------
+    f : figure handle
+
+    """
+    N, num_antigens  = resp_mat.shape
+   
+    width = 0.8/N      # the width of the bars
+    num_colors = max(3,N)
+    cmap_name = "palettable.colorbrewer.qualitative." + 'Set1' + "_" + str(num_colors) + ".mpl_colors"
+    colors = eval(cmap_name)
+
+    if isinstance(resp_mat, pd.DataFrame):
+        resp_mat = resp_mat.as_matrix()
+
+    if subplot_flag:
+        num_plots = N
+    else:
+        num_plots = 1
+    f, axarr = plt.subplots(num_plots, 1)
+    f.set_tight_layout(True)
+
+    for i in np.arange(N):
+        
+        if subplot_flag:
+            curr_ax = axarr[i]
+        else:
+            curr_ax = axarr
+
+        if plot_type == 'line':    
+            curr_ax.plot(np.arange(1, num_antigens+1), resp_mat[i],color=colors[i])
+        elif plot_type == 'bar':
+            curr_ax.bar(np.arange(1, num_antigens+1), resp_mat[i], axis=1, width=width, color=colors[0])            
+    
+        if (ptid_labels is not None) and subplot_flag:
+            curr_ax.set_title("Response for ptid " + ptid_labels[i])
+
+        curr_ax.set_yticks([])
+        curr_ax.set_ylim(0, 60000)
+    if (ptid_labels is not None) and not subplot_flag:
+        plt.legend(ptid_labels)
+        print(ptid_labels)
+    return f
+
+
+def plot_2d_scatter_plot(resp1, resp2, labels=None, title_str=None):
+    """
+    Plot scatter plot of responses of resp1 vs. resp2 and reorts linear
+    correlation coefficient betwen the two.
+ 
+    Parameters:
+    ----------
+    resp1: [np.ndarray | pd.DataFrame]
+        responses of first sample
+    resp2: [np.ndarray | pd.DataFrame]
+        responses of second sample
+    labels: [tuple | None (default)]
+        labels of the two responses for axis labeling. order is (x_label, y_label)
+    title_str: [string | None (default)]
+        title of plot. note that title will always appear with Pearson 
+        r and p reported.
+    Returns:
+    -------
+    f : figure handle
+    """
+    r, p = scipy.stats.pearsonr(resp1, resp2)
+    
+    f, axarr = plt.subplots(1)
+    f.set_tight_layout(True)
+    axarr.plot(resp1, resp2, 'o')
+    axarr.set_ylim(-1000, 60000)
+    axarr.set_xlim(-1000, 60000)  
+    if labels is not None:
+        plt.xlabel(labels[0])
+        plt.ylabel(labels[1])
+    if title_str is None:
+        plt.title("r = {:.2f}, p = {:.4f}".format(r, p))
+    else:
+        plt.title(title_str + " r = {:.2f}, p = {:.4f}".format(r, p))
+    return f
+    
+
+def plot_reproducibility_plots(resp_mat, ptid_labels=None, title_str=None,
+                               subplot_flag=False, plot_type='line'):
+    """
+    Plot two plots for assesing reproducibility.
+
+    Parameters:
+    ----------
+    resp_mat : np.ndarray, or pd.DataFrame
+        antigen array responses where each row corresponds to responses for a single ptid
+        assumes only 2 rows are proivded, one for each sample.
+    ptid_labels : [ List | None (default)]
+        ptid ids for plotting (optional)
+    title_str: [string | None (default)]
+        title of plot. note that title will always appear with Pearson 
+        r and p reported.
+    subplot_flag : [True | False]
+        if True plot response of each ptid in a different subplot, else plot all on a single plot.
+    plot_type : ['line' (default) | 'bar']
+        type of plot used to present data when plottting individul responses.
+
+    Returns:
+    -------
+    fig_handles: list
+        list of figure handles
+    """
+    fig_handles = []
+    fig_handles.append(plot_responses_by_ptids(resp_mat=resp_mat, ptid_labels=ptid_labels,
+                                               subplot_flag=subplot_flag, plot_type=plot_type))
+    if isinstance(resp_mat, pd.DataFrame):
+        resp1 = resp_mat.iloc[0]
+        resp2 = resp_mat.iloc[1]
+    else:
+        resp1 = resp_mat[0]
+        resp2 = resp_mat[1]
+
+    fig_handles.append(plot_2d_scatter_plot(resp1=resp1, resp2=resp2, labels=ptid_labels, title_str=title_str))
+    return fig_handles
+
+def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=None, plot_type='line',
+                                        subplot_flag=False):
+    """
+    plot responses of a single ptid from longitudinal timepoints
     
     Parameters:
     ----------
