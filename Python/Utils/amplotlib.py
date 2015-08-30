@@ -1,3 +1,4 @@
+""" Plotting library for Hertz Lab antigen array data """
 import palettable
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -12,9 +13,11 @@ import matplotlib as mpl
 import seaborn as sbn
 import pylab
 import itertools
-import pdb as pdb
+import ipdb as ipdb
 
-__all__ = ['plot_linear_corr', 'plot_longitudinal_responses_by_ptid', 'plot_responses_by_clusters', 'plot_responses_by_groups']
+__all__ = ['plot_linear_corr', 'plot_longitudinal_responses_by_ptid', 'plot_responses_by_clusters',
+           'plot_responses_by_groups', 'plot_responses_by_ptids', 'plot_2d_scatter_plot',
+           'plot_reproducibility_plots']
 
 
 def plot_linear_corr(x, y, x_label=None, y_label=None, title_str=None):
@@ -75,7 +78,7 @@ def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplo
     """
     N, num_antigens  = resp_mat.shape
    
-    width = 0.8/N      # the width of the bars
+    width = 0.3      # the width of the bars
     num_colors = max(3,N)
     cmap_name = "palettable.colorbrewer.qualitative." + 'Set1' + "_" + str(num_colors) + ".mpl_colors"
     colors = eval(cmap_name)
@@ -90,23 +93,28 @@ def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplo
     f, axarr = plt.subplots(num_plots, 1)
     f.set_tight_layout(True)
 
+    curr_inds = np.arange(1, num_antigens+1)
     for i in np.arange(N):
         
         if subplot_flag:
             curr_ax = axarr[i]
         else:
             curr_ax = axarr
+            if (plot_type == 'bar') and (i > 0):
+                curr_inds = curr_inds + width
 
-        if plot_type == 'line':    
-            curr_ax.plot(np.arange(1, num_antigens+1), resp_mat[i],color=colors[i])
+        if plot_type == 'line':        
+            curr_ax.plot(curr_inds, resp_mat[i],color=colors[i])
+            
         elif plot_type == 'bar':
-            curr_ax.bar(np.arange(1, num_antigens+1), resp_mat[i], axis=1, width=width, color=colors[0])            
+            curr_ax.bar(curr_inds, resp_mat[i], width=width, color=colors[i])            
     
         if (ptid_labels is not None) and subplot_flag:
             curr_ax.set_title("Response for ptid " + ptid_labels[i])
 
-        curr_ax.set_yticks([])
+        #curr_ax.set_yticks([])
         curr_ax.set_ylim(0, 60000)
+    
     if (ptid_labels is not None) and not subplot_flag:
         plt.legend(ptid_labels)
         print(ptid_labels)
@@ -186,6 +194,8 @@ def plot_reproducibility_plots(resp_mat, ptid_labels=None, title_str=None,
         resp2 = resp_mat[1]
 
     fig_handles.append(plot_2d_scatter_plot(resp1=resp1, resp2=resp2, labels=ptid_labels, title_str=title_str))
+    fig_handles[0].set_size_inches(18, 11)
+    fig_handles[1].set_size_inches(11, 11)
     return fig_handles
 
 def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=None, plot_type='line',
