@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib as mpl
 import seaborn as sbn
 import pylab
+import myboxplot as mbp
 import itertools
 import ipdb as ipdb
 
@@ -265,49 +266,49 @@ def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=No
     return f
 
 
-    def plot_responses_by_clusters(data, cluster_labels, fig_size=(18,11), cluster_title_prefix=""):
-        """ 
-        Plot antigen array responses of individual samples by cluster assignment. 
-        Each cluster is plotted in a sepearate panel (subplot)
+def plot_responses_by_clusters(data, cluster_labels, fig_size=(18,11), cluster_title_prefix=""):
+    """ 
+    Plot antigen array responses of individual samples by cluster assignment. 
+    Each cluster is plotted in a sepearate panel (subplot)
 
-        Parameters:
-        ----------
-        data : [np.ndarray | pd.DataFrame] 
-            Data for each sample - each row is the responses of a single subject to a set of antigens on the array
-        cluster_labels : np.ndarray of integers
-            Array of integers with the cluster assignment of each group. 
-            Clusters are assumed to be labeled from 1:num_clusters.
-        fig_size : 2-tuple of integers default set to (18, 11)
-            (width, height) of figure
-        cluster_title_prefix : [str | None (default)]
-            prefix to the cluster titles,  e.g. which protein antigens were used for clustering.
+    Parameters:
+    ----------
+    data : [np.ndarray | pd.DataFrame] 
+        Data for each sample - each row is the responses of a single subject to a set of antigens on the array
+    cluster_labels : np.ndarray of integers
+        Array of integers with the cluster assignment of each group. 
+        Clusters are assumed to be labeled from 1:num_clusters.
+    fig_size : 2-tuple of integers default set to (18, 11)
+        (width, height) of figure
+    cluster_title_prefix : [str | None (default)]
+        prefix to the cluster titles,  e.g. which protein antigens were used for clustering.
 
-        Returns:
-        -------
-        f : figure handle
+    Returns:
+    -------
+    f : figure handle
 
-        """
-        num_clusters = len(np.unique(cluster_labels))
+    """
+    num_clusters = len(np.unique(cluster_labels))
 
-        f, axarr = plt.subplots(num_clusters,1)    
-        f.set_tight_layout(True)
-        f.set_size_inches(fig_size)
-        
-        antigen_inds = np.arange(1,data.shape[1]+1)
+    f, axarr = plt.subplots(num_clusters,1)    
+    f.set_tight_layout(True)
+    f.set_size_inches(fig_size)
+    
+    antigen_inds = np.arange(1,data.shape[1]+1)
 
-        # plot clusters  
-        for i in np.arange(1,num_clusters+1):
-        
-            curr_inds = [cluster_labels == i]
-            curr_data = data[curr_inds][:]
+    # plot clusters  
+    for i in np.arange(1,num_clusters+1):
+    
+        curr_inds = [cluster_labels == i]
+        curr_data = data[curr_inds][:]
 
-            axarr[i].plot(np.arange(antigen_inds, curr_data)) 
-            axarr[i].set_title(title_prefix + " cluster " + str(i+1) + " (n = " + str(len(curr_inds)) + ")")
-            axarr[i].set_yticks([])
+        axarr[i].plot(np.arange(antigen_inds, curr_data)) 
+        axarr[i].set_title(title_prefix + " cluster " + str(i+1) + " (n = " + str(len(curr_inds)) + ")")
+        axarr[i].set_yticks([])
 
-        return f
+    return f
 
-def plot_responses_by_groups(data, group_labels, groups=None, group_names=None, fig_size=(18,11), title_prefix=""):
+def plot_responses_by_groups(data, group_labels, groups=None, group_names=None, fig_size=(18,11), title_prefix=''):
         """ 
         Plot antigen array responses of individual samples by group assignment. 
         Each group is plotted in a different panel (subplot)
@@ -350,12 +351,196 @@ def plot_responses_by_groups(data, group_labels, groups=None, group_names=None, 
             g_inds = mlab.find(group_labels == group)
             curr_data = data.iloc[g_inds]
             
-            axarr[i].plot(antigen_inds,curr_data.T.as_matrix())
+            axarr[i].plot(antigen_inds, curr_data.T.as_matrix())
             axarr[i].set_title(title_prefix + group_names[i]  + " (n = " + str(len(g_inds)) + ")")
             axarr[i].set_yticks([])
 
         return f
 
+def plot_clustering_dendrograms(Z_struct, prot_names, labels, fig_path=None, orientation='left', fig_size=(18,11)):
+    """
+    plot all clustering dendrograms using the specific set of proteins in prot_names
+    
+    Parameters:
+    ----------
+    Z_struct: dictionary
+        clustering structure (matlab style) returned by linkage indexed by ind_dict.keys()
+    prot_names: list
+        list of strings of protein antigens from which peptides are on the array_data_filename
+    labels: list
+        list of labels of datapoints to label the dendrogram. 
+    fig_path: [string | None (default)]
+        if set, will save figures in fig_path. if None (default) figures are not saved.
+    fig_size : 2-tuple of integers default set to (18, 11)
+        (width, height) of figure
+    """
+    for p in prot_names:
+        f, axarr = plt.subplots(1)
+        f.set_size_inches(fig_size)        
+        f = sch.dendrogram(Z=Z_struct[p], labels=labels, orientation=orientation)
+        axarr.set_title(p)
+
+        if fig_path is not None:
+            f.set_tight_layout(True)
+            filename = "".join([fig_path, p, "_dendrograms.png"])
+            f.savefig(filename, dpi=200)
+
+def plot_summary_stat_boxplots_by_clusters(arr_df, clusters, prot_names, arr_summary_stats, sample_inds=None, fig_path=None, fig_size=(11,11)):
+    """ 
+    Plot boxplots of summary stats by clusters
+    
+    Parameters:
+    ----------
+    arr_df: pandas.DataFrame
+        dataframe of array data
+    clusters: dictionary
+        cluster assignment of each datapoint indexed by ind_dict.keys()
+    prot_names: list
+        list of strings of protein antigens from which peptides are on the array_data_filename
+    arr_summary_stats: list
+        list of array summary statistics for which boxplots are to be generated.
+    sample_inds: [bool array | None]
+        boolean array specifying which samples to use. If None (default) will plot all.
+    fig_path: [string | None (default)]
+        if set, will save figures in fig_path. if None (default) figures are not saved.
+    fig_size : 2-tuple of integers default set to (11, 11)
+            (width, height) of figure   
+    """
+    if sample_inds is None:
+        sample_inds = [True]*arr_df.shape[0]
+    
+    for p in prot_names:
+        for assay in arr_summary_stats:
+            f = plt.figure()    
+            f.set_size_inches(fig_size)       
+            mbp.myboxplot_by_labels(arr_df[sample_inds][assay], clusters[p])
+            plt.title("".join([p, " clusters ", assay]))
+            plt.xlabel('Cluster #')
+            
+            # save to file only if save_flag is on
+            if fig_path is not None:
+                filename = "".join([fig_path, p, "_", assay, "_boxplots_by_clusters_n_", str(num_clusters), ".png"])
+                f.savefig(filename, dpi=200)
 
 
+def plot_summary_stat_boxplots_by_exp_groups(arr_df, arr_summary_stats, sample_inds=None, fig_path=None, fig_prefix=None, fig_size=(11,11)):
+    """"
+    Plot boxplots of summary stats by experimental groups
+    
+    Parameters:
+    ----------
+    arr_df: pandas.DataFrame
+        dataframe of array data
+    arr_summary_stats: list
+        list of array summary statistics for which boxplots are to be generated.
+    sample_inds: [bool array | None (default)]
+        defines which samples to use in boxplots (allows selecting subset). 
+        If set to None (default) will use all samples.
+    fig_path: [string | None (default)]
+        if set, will save figures in fig_path. if None (default) figures are not saved.   
+    fig_prefix: [string | None]
+        if a subset of the data is plotted, allows specifying a figure name prefix
+        for saving to files. 
+    fig_size : 2-tuple of integers default set to (11, 11)
+            (width, height) of figure
+    """ 
+    if sample_inds is None:
+        sample_inds = [True]*arr_df.shape[0]
+    if fig_prefix is None:
+        fig_prefix = ''
 
+    for assay in arr_summary_stats:        
+        f = plt.figure()
+        f.set_size_inches(fig_size)
+        mbp.myboxplot_by_labels(arr_df[sample_inds][assay], arr_df[sample_inds]['group'])
+        plt.title("".join([fig_prefix, " ", assay, "_responses"]))
+        plt.xlabel('group #')
+    
+        # save to file only if save_flag is on
+        if fig_path is not None:
+            f.set_tight_layout(True)
+            filename = "".join([fig_path, fig_prefix, "_", assay, "_boxplots_by_groups.png"])
+            f.savefig(filename, dpi=200)
+
+def plot_responses_by_exp_groups(arr_df, antigen_inds, exp_groups, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 60000]):
+    """
+    plot responses by groups
+    """ 
+    num_groups = len(exp_groups)
+    f, axarr = plt.subplots(num_groups,1)
+    f.set_size_inches(fig_size)
+
+    # plot groups
+    for i in np.arange(num_groups):
+
+        axarr[i].plot(np.arange(len(antigen_inds)), arr_df[antigen_inds].iloc[np.where(arr_df['group'] == exp_groups[i])].T)
+        axarr[i].set_title(fig_prefix + " " + exp_groups[i] + " (n = " + str(len(np.where(arr_df['group'] == exp_groups[i])[0])) + ")")
+        axarr[i].set_yticks([])
+        axarr[i].set_ylim(y_lims)
+
+    # save to file only if save_flag is on
+    if fig_path is not None:
+        f.set_tight_layout(True)
+        filename = "".join([fig_path, fig_prefix,  "_raw_responses_by_groups.png"])
+        f.savefig(filename, dpi=200)
+
+
+def plot_median_responses_by_exp_groups(group_medians, exp_groups, prot_str, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 30000]):
+    """ plot bar plots of median responses to a given set of antigens by experimental group"""
+    width = 0.3 # the width of the bars 
+    colors = ['r','b', 'k', 'g', 'm']
+            
+    f, axarr = plt.subplots(len(exp_groups),1)
+    f.set_size_inches(fig_size)
+    
+    for i in np.arange(len(exp_groups)):
+        rects1 = axarr[i].bar(np.arange(len(group_medians[(exp_groups[i], prot_str)])), group_medians[(exp_groups[i], prot_str)], width=width, color=colors[i])
+        axarr[i].set_title(exp_groups[i] + " " + prot_str)
+        axarr[i].set_ylim(y_lims)
+
+
+    if fig_path is not None:    
+        f.set_tight_layout(True)
+        filename = "".join([fig_path, prot_str,  "_median_responses_by_treatment_group.png"])
+        f.savefig(filename, dpi=200)
+
+
+def plot_median_responses_by_clusters(arr_df, antigen_inds, num_clusters, clusters, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 60000]):
+    """
+    plot bar plot of median responses by clusters.
+    """ 
+    f, axarr = plt.subplots(num_clusters,1)
+    f.set_size_inches(fig_size)
+
+    # plot groups
+    for i in np.arange(num_clusters):
+        axarr[i].bar(np.arange(len(antigen_inds)), np.median(arr_df[antigen_inds].loc[clusters == i+1].T, axis=1))
+        axarr[i].set_title(fig_prefix + " cluster " + str(i+1) + " (n = " + str(len(np.where([clusters == i+1])[0])) + ")")
+        axarr[i].set_yticks([])
+        axarr[i].set_ylim(y_lims)
+
+    # save to file only if save_flag is on
+    if fig_path is not None:
+        f.set_tight_layout(True)
+        filename = "".join([fig_path, fig_prefix,  "_median_responses_by_clusters_n_", str(num_clusters), ".png"])
+        f.savefig(filename, dpi=200)
+
+def plot_raw_responses_by_clusters(arr_df, antigen_inds, num_clusters, clusters, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 60000]):
+    """
+    plot bar plot of median responses by clusters.
+    """ 
+    f, axarr = plt.subplots(num_clusters,1)
+    f.set_size_inches(fig_size)
+
+    # plot groups
+    for i in np.arange(num_clusters):
+        axarr[i].plot(np.arange(len(antigen_inds)), arr_df[antigen_inds].loc[clusters == i+1].T)
+        axarr[i].set_title(fig_prefix + " cluster " + str(i+1) + " (n = " + str(len(np.where([clusters == i+1])[0])) + ")")
+        axarr[i].set_yticks([])
+        axarr[i].set_ylim(y_lims)
+
+    # save to file only if save_flag is on
+    if fig_path is not None:
+        f.set_tight_layout(True)
+        filename = "".join([fig_path, fig_prefix,  "_median_responses_by_clusters_n_", str(num_clusters), ".png"])
+        f.savefig(filename, dpi=200)

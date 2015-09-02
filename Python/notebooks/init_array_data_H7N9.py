@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as sch
 import statsmodels.api as sm
 import amplotlib as amp
+import amutils as amutils
 
 # General parameters
 cluster_plot_flag = False
@@ -60,11 +61,11 @@ load_path = save_path
 # multiple dates can be entered, but must have a corresponding prefix
 experiment_dates = ['06_03_2015'] #['08_21_2014', '08_22_2014', '08_25_2014', '09_04_2014', '09_05_2014']; 
 
-# all slides and slideToSampleMapping file for each date have the exact same filePrefix
-exp_prefix = [None]*len(experiment_dates) # initalize empty list of size experiment_dates
-for i, exp in enumerate(experiment_dates):
-  exp_str = exp.replace('20', '') # strip away the 20 from the year part of the date
-  exp_prefix[i] = "".join([project_name, '_', exp_str])
+# # all slides and slideToSampleMapping file for each date have the exact same filePrefix
+# exp_prefix = [None]*len(experiment_dates) # initalize empty list of size experiment_dates
+# for i, exp in enumerate(experiment_dates):
+#   exp_str = exp.replace('20', '') # strip away the 20 from the year part of the date
+#   exp_prefix[i] = "".join([project_name, '_', exp_str])
 
 #-------------------------------------------------------------------------------
 # Additional parameters - project specific
@@ -103,28 +104,30 @@ treatmentLabels = ['WT-pre-vac', 'obese-pre-vac', 'wt-post-vac', 'obese-post-vac
 # Read in all mat files of array data, and strip them out from the matstructs 
 # into a dataframe:
 #-------------------------------------------------------------------------------#
-arr_df = None
-for i, exp in enumerate(experiment_dates):
+arr_df, antigens = amutils.load_array_data(load_path, project_name, experiment_dates)
 
-    mapping_filename = os.path.join(load_path, exp, "".join([exp_prefix[i], 'SlideToSampleMappings.txt'])) 
-    array_data_filename = os.path.join(save_path, exp, "".join([exp_prefix[i], '_arrayData_', type_flag, '.mat']))
-    print(array_data_filename)
+# arr_df = None
+# for i, exp in enumerate(experiment_dates):
+
+#     mapping_filename = os.path.join(load_path, exp, "".join([exp_prefix[i], 'SlideToSampleMappings.txt'])) 
+#     array_data_filename = os.path.join(save_path, exp, "".join([exp_prefix[i], '_arrayData_', type_flag, '.mat']))
+#     print(array_data_filename)
     
-    d = io.loadmat(array_data_filename, struct_as_record=False)['arrayData']
-    matstruct = d[0][0]
-    ptids = [matstruct.ptids[0][i][0] for i in np.arange(matstruct.ptids[0].shape[0])]
-    group_names = [matstruct.groupNames[0][i][0] for i in np.arange(matstruct.ptids[0].shape[0])]
+#     d = io.loadmat(array_data_filename, struct_as_record=False)['arrayData']
+#     matstruct = d[0][0]
+#     ptids = [matstruct.ptids[0][i][0] for i in np.arange(matstruct.ptids[0].shape[0])]
+#     group_names = [matstruct.groupNames[0][i][0] for i in np.arange(matstruct.ptids[0].shape[0])]
     
-    res = matstruct.responseMatrix[0][0]
-    antigens = [matstruct.antigenNames[i][0][0] for i in np.arange(matstruct.antigenNames.shape[0])]
+#     res = matstruct.responseMatrix[0][0]
+#     antigens = [matstruct.antigenNames[i][0][0] for i in np.arange(matstruct.antigenNames.shape[0])]
 
-    columns = antigens + ['group']
-    data = np.column_stack((res, np.asarray(group_names)))
+#     columns = antigens + ['group']
+#     data = np.column_stack((res, np.asarray(group_names)))
 
-    if arr_df is None:
-        arr_df = pd.DataFrame(data, index=ptids, columns=columns)
-    else:
-        arr_df = pd.concat((arr_df, pd.DataFrame(data, index=ptids, columns=columns)), axis=0)
+#     if arr_df is None:
+#         arr_df = pd.DataFrame(data, index=ptids, columns=columns)
+#     else:
+#         arr_df = pd.concat((arr_df, pd.DataFrame(data, index=ptids, columns=columns)), axis=0)
 
 
 #-----------------------------------------------------------------#
@@ -134,21 +137,22 @@ for i, exp in enumerate(experiment_dates):
 # background subtraction: subtract maximal BSA response for each antigen
 #-----------------------------------------------------------------#
 
-bsa_inds = arr_df.index.to_series().str.contains('BSA')
-bg_df = arr_df[bsa_inds]
-if len(bg_df.shape) == 1:
-    bg_responses = np.asarray(bg_df[antigens])
-else:
-    bg_responses = np.asarray(bg_df[antigens].max())
-fg_inds = ~bsa_inds
+# bsa_inds = arr_df.index.to_series().str.contains('BSA')
+# bg_df = arr_df[bsa_inds]
+# if len(bg_df.shape) == 1:
+#     bg_responses = np.asarray(bg_df[antigens])
+# else:
+#     bg_responses = np.asarray(bg_df[antigens].max())
+# fg_inds = ~bsa_inds
 
-bg_df = arr_df[bsa_inds]
-arr_df = arr_df[fg_inds]
+# bg_df = arr_df[bsa_inds]
+# arr_df = arr_df[fg_inds]
 
-curr_data = np.array(arr_df.as_matrix(columns=[antigens]), dtype=float) - bg_responses.T
-curr_data[np.where(curr_data < 0)] = 0
-arr_df[antigens] = curr_data
-arr_df[antigens] = arr_df[antigens].astype(float)
+# curr_data = np.array(arr_df.as_matrix(columns=[antigens]), dtype=float) - bg_responses.T
+# curr_data[np.where(curr_data < 0)] = 0
+# arr_df[antigens] = curr_data
+# arr_df[antigens] = arr_df[antigens].astype(float)
+arr_df, bg_df = amutils.backgound_subtract_array_data(arr_df, antigens)
 
 #-----------------------------------------------------------------#
 # Index and group dictionary setup:
