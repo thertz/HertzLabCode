@@ -21,8 +21,7 @@ __all__ = ['']
 #     resp_df: pandas.DataFrame
 #         dataframe of responses of the samples to compare
 #     peak_threshold: int
-#         threshold defining response peaks. Default set to 30,000.
-    
+#         threshold defining response peaks. Default set to 30,000. 
 #     Returns:
 #     -------
 #         output of responses of all samples to peaks in each sample in the dataframe
@@ -86,8 +85,6 @@ def load_array_data(load_path, project_name, exp_dates, type_flag='median'):
     return arr_df, antigens
 
 
-
-
 def backgound_subtract_array_data(arr_df, antigens, bg_name='BSA', method='max'):
     """
     remove negative control responses as measured by BSA alone.
@@ -106,7 +103,7 @@ def backgound_subtract_array_data(arr_df, antigens, bg_name='BSA', method='max')
     method: ['mean', 'max']
         summary statistic used to define bg response if more than one repeat of
         the negative control is provided.
-    
+
     Returns:
     -------
     arr_df: pandas.DataFrame
@@ -137,9 +134,11 @@ def backgound_subtract_array_data(arr_df, antigens, bg_name='BSA', method='max')
 
     return arr_df, bg_df
 
-def baseline_adjust_array_data_by_subject(arr_df, time_dict, antigens, baseline_key, method='subtraction'):
+
+def baseline_adjust_array_data_by_subject(arr_df, time_dict, antigens,
+                                          baseline_key, method='subtraction'):
     """
-    Adjust for baseline responses by subject. This can be done either by subrtacting 
+    Adjust for baseline responses by subject. This can be done either by subrtacting
     the baseline response, or by dividing by it.
     Parameters:
     ----------
@@ -150,30 +149,48 @@ def baseline_adjust_array_data_by_subject(arr_df, time_dict, antigens, baseline_
     antigens: list
         list of antigen columns in df which need to be baseline adjusted.
     baseline_key: string
-        key of baseline responses in the time_dict dictionary
+        key of baseline responses in the time_dict dictionary. Assumes that
+        this key may also be used in the names of samples - e.g. N38_D0, or
+        D0_N38.
     method: ['subtraction', 'division']
         Adjustment type. Currently two types are supported:
-        'subtraction' - in which baseline responses are subtracted from all other 
+        'subtraction' - in which baseline responses are subtracted from all other
         timepoints and negative values are zeroed out
-        'division' - compute fold increase over baseline for all additional timepoints. 
-    
+        'division' - compute fold increase over baseline for all additional timepoints.
+
     Returns:
     -------
     arr_df: pandas.DataFrame
         modified arr_df in which all non-baseline responses were adjusted for baseline.
     """
-    ipdb.set_trace()
     arr_df.is_copy = False  # turn of automatic warnings on setting data into original arr_df
+
     for s in time_dict[baseline_key]:
-        curr_mask = arr_df.index.to_series().str.startswith(s)
+        
+        curr_mask = arr_df.index.to_series().str.startswith(s.replace(baseline_key, ''))
         curr_mask.loc[s] = False
 
         if method is 'subtraction':
-            arr_df[curr_mask][antigens] = arr_df[curr_mask][antigens] - arr_df.loc[s][antigens]
+            arr_df.loc[curr_mask, antigens] = arr_df[curr_mask][antigens].sub(arr_df.loc[s][antigens])
         elif method is 'division':
-            arr_df[curr_mask][antigens] = arr_df[curr_mask][antigens]/arr_df.loc[s][antigens]
+            arr_df.loc[curr_mask, antigens] = arr_df[curr_mask][antigens].div(arr_df.loc[s][antigens])
 
     return arr_df
+
+# def baseline_adjust_data(subject_arr_df, baseline_name, antigens, method='subtraction'):
+#     subject_arr_df.is_copy = False
+#     for t in subject_arr_df.index:
+#         if t == baseline_name:
+#             continue
+#         else:
+#             if method is 'subtraction':
+#                 subject_arr_df.loc[t][antigens] = subject_arr_df.loc[t][antigens] - \
+#                                             subject_arr_df.loc[baseline_name][antigens]
+#             elif method is 'division':
+#                 subject_arr_df.loc[t][antigens] = subject_arr_df.loc[t][antigens] / \
+#                                             subject_arr_df.loc[baseline_name][antigens]
+
+#     return subject_arr_df
 
 
 def initialize_indexing_dictionaries(arr_df, prot_names, prot_strs, exp_groups, pre_post_data=False):

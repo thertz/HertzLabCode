@@ -57,7 +57,7 @@ def plot_linear_corr(x, y, x_label=None, y_label=None, title_str=None):
     return f
 
 
-def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplot_flag=False):
+def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplot_flag=False, y_lim=60000):
     """
     plot responses of a set of ptids. Can be used for reproducibility comparisons.
     
@@ -105,7 +105,7 @@ def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplo
                 curr_inds = curr_inds + width
 
         if plot_type == 'line':        
-            curr_ax.plot(curr_inds, resp_mat[i],color=colors[i])
+            curr_ax.plot(curr_inds, resp_mat[i],color=colors[i], linestyle='-')
             
         elif plot_type == 'bar':
             curr_ax.bar(curr_inds, resp_mat[i], width=width, color=colors[i])            
@@ -114,7 +114,7 @@ def plot_responses_by_ptids(resp_mat, ptid_labels=None, plot_type='line', subplo
             curr_ax.set_title("Response for ptid " + ptid_labels[i])
 
         #curr_ax.set_yticks([])
-        curr_ax.set_ylim(0, 60000)
+        curr_ax.set_ylim(0, y_lim)
     
     if (ptid_labels is not None) and not subplot_flag:
         plt.legend(ptid_labels)
@@ -357,7 +357,7 @@ def plot_responses_by_groups(data, group_labels, groups=None, group_names=None, 
 
         return f
 
-def plot_clustering_dendrograms(Z_struct, prot_names, labels, fig_path=None, orientation='left', fig_size=(18,11)):
+def plot_clustering_dendrograms(Z_struct, prot_names, labels, fig_path=None, orientation='left', fig_size=(18,11), fig_prefix=None):
     """
     plot all clustering dendrograms using the specific set of proteins in prot_names
     
@@ -377,12 +377,14 @@ def plot_clustering_dendrograms(Z_struct, prot_names, labels, fig_path=None, ori
     for p in prot_names:
         f, axarr = plt.subplots(1)
         f.set_size_inches(fig_size)        
-        f = sch.dendrogram(Z=Z_struct[p], labels=labels, orientation=orientation)
+        sch.dendrogram(Z=Z_struct[p], labels=labels, orientation=orientation)
         axarr.set_title(p)
 
         if fig_path is not None:
             f.set_tight_layout(True)
-            filename = "".join([fig_path, p, "_dendrograms.png"])
+            if fig_prefix is None:
+                fig_prefix = ''
+            filename = "".join([fig_path, fig_prefix, p, "_dendrograms.png"])
             f.savefig(filename, dpi=200)
 
 def plot_summary_stat_boxplots_by_clusters(arr_df, clusters, prot_names, arr_summary_stats, sample_inds=None, fig_path=None, fig_size=(11,11)):
@@ -416,7 +418,7 @@ def plot_summary_stat_boxplots_by_clusters(arr_df, clusters, prot_names, arr_sum
             mbp.myboxplot_by_labels(arr_df[sample_inds][assay], clusters[p])
             plt.title("".join([p, " clusters ", assay]))
             plt.xlabel('Cluster #')
-            
+            num_clusters = len(np.unique(clusters[p]))
             # save to file only if save_flag is on
             if fig_path is not None:
                 filename = "".join([fig_path, p, "_", assay, "_boxplots_by_clusters_n_", str(num_clusters), ".png"])
@@ -459,7 +461,7 @@ def plot_summary_stat_boxplots_by_exp_groups(arr_df, arr_summary_stats, sample_i
         # save to file only if save_flag is on
         if fig_path is not None:
             f.set_tight_layout(True)
-            filename = "".join([fig_path, fig_prefix, "_", assay, "_boxplots_by_groups.png"])
+            filename = "".join([fig_path, fig_prefix, assay, "_boxplots_by_groups.png"])
             f.savefig(filename, dpi=200)
 
 def plot_responses_by_exp_groups(arr_df, antigen_inds, exp_groups, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 60000]):
@@ -501,7 +503,9 @@ def plot_median_responses_by_exp_groups(group_medians, exp_groups, prot_str, fig
 
     if fig_path is not None:    
         f.set_tight_layout(True)
-        filename = "".join([fig_path, prot_str,  "_median_responses_by_treatment_group.png"])
+        if fig_prefix is None:
+            fig_prefix =''
+        filename = "".join([fig_path, fig_prefix, prot_str,  "_median_responses_by_treatment_group.png"])
         f.savefig(filename, dpi=200)
 
 
