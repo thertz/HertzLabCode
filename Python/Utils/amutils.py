@@ -2,6 +2,7 @@
 import pandas as pd
 import matplotlib.mlab as mlab
 import scipy.stats
+import statsmodels.stats.multitest as mts
 import numpy as np
 import itertools
 import os as os
@@ -316,6 +317,7 @@ def cluster_array_data_by_proteins(arr_df, sample_inds, num_clusters, ind_dict, 
     metric: string
         distance metric used for comparing response vectors. Default set to 'spearman' (rank order correlation).
 
+
     Returns:
     -------
     dist_mat: dictionary
@@ -380,3 +382,105 @@ def compute_exp_group_summary_stats_by_protein(arr_df, prot_names, prot_strs, gr
 
     return group_medians, group_stds
 
+
+def compute_label_blinded_antigen_filters(arr_df, antigen_inds, filter_name='percent_responders', filter_threshold=0.4, pos_threshold=2000):
+    """
+    compute label blinded filters for statistical testing of individual antigens on array using 
+    different criteria for filtering. Currently only one criteria is used for filtering which is based
+    on the percent of responders (disregarding labels).
+
+    Parameters:
+    ----------
+    arr_df: pandas.DataFrame
+        dataframe of array data
+    antigen_inds: dictionary
+        dictionary mapping prot_names to columns in the arr_df
+    filter_name: [string | ['percent_responders' (default)]
+        name of filter to apply to the antigenStats. Percent responders includes all antigens to which
+        there are at least T percent responders.
+    filter_threshold: [float | 0.4 (default)]
+        numerical threshold used to filter antigens. Default value set to 0.4
+    pos_threshold: [integer | 2000 (default)]
+        treshold to define a positive response to an antigen. Default set to 2000
+    Returns:
+    -------
+    antigen_filters: dictionary
+        dictionary with keys for the antigen_inds dictionary and names of single antigens in the given protein that
+        are included in this filter (i.e. should be tested).
+    """
+    antigen_filters = {}
+    for prot_name, antigens in antigen_inds.iteritems():
+        antigen_filters[prot_name] = []
+
+        # breadth - response is positive if it is above the pos_thredhold
+        for col in antigens:
+            pos_resp = arr_df[col].map(lambda s: 1 if s > pos_threshold else 0).values
+            if (float(np.sum(pos_resp))/len(pos_resp) > filter_threshold):
+                antigen_filters[prot_name].append(col)
+
+    return antigen_filters
+
+
+def compare_single_antigens_by_groups(arr_df, group_names, antigen_filters, pos_threshold, fdr_threshold=0.2):
+    """
+    Compute un-adjusted and ajudsted two-sided Fisher's exact p values for specific antigens which are 
+    defined by antigen_filters. Filters are computed in label_blinded manner to select which antigens 
+    should be included in testing.adjusted p-values are computed using bonferroni correction. BH Q-values are
+    also computed using the provided fdr_threshold.
+
+    Parameters:
+    ----------
+    arr_df: pandas.DataFrame
+        dataframe of array data
+     antigen_filters: dictionary
+        dictionary with keys for the antigen_inds dictionary and names of single antigens in the given protein that
+        are included in this filter (i.e. should be tested).
+    pos_threshold: [integer | 2000 (default)]
+        treshold to define a positive response to an antigen. Default set to 2000
+    fdr_threshold: [integer | 0.2 (default)]
+        threshold for false discovery rate using BH q value multiplicity correction.
+    
+    Returns:
+    -------
+    single_antigen_stats: dictionary
+        dictionary for each of the keys of antigen_inds, which includes tuples of all antigens tested
+        before and following multiplicity correction using BH q values. 
+        Each tuple inlcudes: (antigen_name, 2x2 table, p_value, q_value) 
+
+    sig_antigens: dictionary
+        dictionary for each of the keys of antigen_inds, which includes tuples of all antigens with fdr below
+        the fdr_threshold parameter.
+        Each tuple inlcudes: (antigen_name, 2x2 table, p_value, bonferroni_p_value, q_value)
+    """
+    single_antigen_stats = {}
+    sig_antigens = {}
+    for prot_name, antigens in antigen_filters.iteritems():
+        single_antigen_stats[prot_name] = []
+        sig_antigens[prot_name] = []
+        p_values = []
+        # breadth - response is positive if it is above the pos_thredhold
+        for col in antigens:
+            pos_df = arr_df[col].map(lambda s: 1 if s > pos_threshold else 0)
+            table = [ [np.count_nonzero(pos_df[arr_df.group == group_names[0]]),np.count_nonzero(1-pos_df[arr_df.group == group_names[0]])],
+                      [np.count_nonzero(pos_df[arr_df.group == group_names[1]]),np.count_nonzero(1-pos_df[arr_df.group == group_names[1]])] ]
+            table_str = "".join(['a=', str(np.count_nonzero(pos_df[arr_df.group == group_names[0]])),
+                                ', b=', str(np.count_nonzero(1-pos_df[arr_df.group == group_names[0]])),
+                                ', c=', str(np.count_nonzero(pos_df[arr_df.group == group_names[1]])),
+                                ', d=', str(np.count_nonzero(1-pos_df[arr_df.group == group_names[1]]))])
+            oddsratio, p_value = scipy.stats.fisher_exact(table)
+            single_antigen_stats[prot_name].append((col, table_str, p_value))
+            p_values.append(p_value)
+        
+        # compute Bonferroni adjusted p_values and BH q-values and append them to the tuples of sig_antigens
+        reject, pvals_corrected, bla, alphaBonf = mts.multipletests(p_values, alpha=0.05, method='bonferroni') 
+        reject, q_values, bla, bla1 = mts.multipletests(p_values, alpha=0.2, method='fdr_bh') 
+        for ind, val in enumerate(antigens):
+            curr_list = list(single_antigen_stats[prot_name][ind])
+            curr_list.append(pvals_corrected[ind])
+            curr_list.append(q_values[ind])
+            single_antigen_stats[prot_name][ind] = tuple(curr_list)
+
+            if p_values[ind] < 0.05 and q_values[ind] < fdr_threshold:
+                sig_antigens[prot_name].append(tuple(curr_list))
+
+    return sig_antigens

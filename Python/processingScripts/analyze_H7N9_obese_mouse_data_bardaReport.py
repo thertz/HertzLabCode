@@ -158,7 +158,7 @@ for t in time_dict.keys():
 
 
 #  cluster using Andrew's package:
-num_clusters = 8
+num_clusters = 5
 dMat = {}  # distance matrices
 Z_struct = {}  # clustering struct
 dend = {}  # dendrogram struct
@@ -251,12 +251,11 @@ f, axarr = plt.subplots(2, 1)
 f.set_tight_layout(True)
 f.set_size_inches(18, 11)
 for i, p in enumerate(['SHA_ha', 'SHA_na']):
-        axarr[i].plot(np.arange(len(ind_dict[p])),   bg_df[ind_dict[p]].T)
-        axarr[i].set_title(p + " BSA responses " + str(i+1) + " (n = " + str(len(np.where([clusters[p] == i+1])[0])) + ")")
-        axarr[i].set_yticks([])
-
-    filename = "".join([FIG_PATH, p,  "_responses_by_clusters_n_", str(num_clusters), ".png"])
-    f.savefig(filename, dpi=20
+        axarr[i].plot(np.arange(len(ind_dict[p])), bg_df[ind_dict[p]].T)
+        axarr[i].set_title(p + " BSA responses " + str(i+1) + " (n = " + str(len(bg_df.shape[0])) + ")")
+        # axarr[i].set_yticks([])
+    filename = "".join([FIG_PATH, p,  "_BSA_responses.png"])
+    f.savefig(filename, dpi=20)
 
 
 # plot boxplots of all clusters
@@ -393,8 +392,8 @@ for p in ['SHA_ha', 'SHA_na']:
 
 
 # plot correlation matrix with dendrogram overlayed:
-for p in ['SHA_ha', 'SHA_na']:
-    colInd = hcp.plotHColCluster(arr_df[post_inds][ind_dict[p]].T,method='complete', metric='spearman',titleStr=p,vRange=(0, 1))
+for p, s in zip(['SHA_ha', 'SHA_na'], ['H7', 'N9']):
+    colInd = hcp.plotHColCluster(arr_df[post_inds][ind_dict[p]].T,method='complete', metric='spearman',titleStr=s,vRange=(0, 1))
     #, \col_labels=arr_df[post_inds].group)
     f = gcf()
     filename = "".join([FIG_PATH + p + "postBoost_clustering_matrix_and_dendrogram"])

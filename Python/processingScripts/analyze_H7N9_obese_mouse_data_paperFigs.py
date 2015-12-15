@@ -14,6 +14,8 @@ import scipy.cluster.hierarchy as sch
 import statsmodels.api as sm
 from sklearn import metrics
 import amplotlib as amp
+import amutils as amutils
+import fdr as fdr
 
 
 ROOT_PATH = '/Users/thertz/Dropbox/HertzLab/'
@@ -69,8 +71,9 @@ for dni, dirName in enumerate(exp_dates):
     res = matstruct.responseMatrix[0][0]
     antigens = [matstruct.antigenNames[i][0][0] for i in np.arange(matstruct.antigenNames.shape[0])]
 
-    columns = antigens + ['group']
+    columns = antigens + ['group', 'date']
     data = np.column_stack((res, np.asarray(group_names)))
+    data = np.column_stack((data, np.asarray([dirName]*len(group_names))))
 
     if arr_df is None:
         arr_df = pd.DataFrame(data, index=ptids, columns=columns)
@@ -171,10 +174,10 @@ for t in time_dict.keys():
     for assay in assays:
 
         r, p = scipy.stats.spearmanr(arr_df.loc[time_dict[t], 'H7_mag'], arr_df.loc[time_dict[t], assay])
-        print("spearman corr between Shanghai HA magnitude and " + assay + " " + t + " vaccination r = {:.2f}, p = {:.4f}".format(r, p))
+        print("spearman corr between Shanghai HA magnitude and " + assay + " " + t + " vaccination r = {:.2f}, p = {:.4g}".format(r, p))
 
         r, p = scipy.stats.spearmanr(arr_df.loc[time_dict[t], 'H7_breadth'], arr_df.loc[time_dict[t], assay])
-        print("spearman corr between Shanghai HA breadth and " + assay + " " + t + " vaccination r = {:.2f}, p = {:.4f}\n".format(r, p))
+        print("spearman corr between Shanghai HA breadth and " + assay + " " + t + " vaccination r = {:.2f}, p = {:.4g}\n".format(r, p))
 
         # plot linear correlation plots
         f = amp.plot_linear_corr(arr_df.loc[time_dict[t], 'H7_mag'], arr_df.loc[time_dict[t], assay], x_label="H7_mag ",
@@ -197,66 +200,23 @@ for t in time_dict.keys():
 
 
 #  cluster using Andrew's package:
-num_clusters = 5
+num_clusters = 4
 dMat = {}  # distance matrices
 Z_struct = {}  # clustering struct
 dend = {}  # dendrogram struct
 clusters = {}  # cluster labels
-cluster_treatment_stats = {}
-pred_treatment_labels = {}  # predicted treatment labels based on clustering
 
-post_inds = time_dict['Post']
-p_labels = np.unique(arr_df[post_inds].group_label.values)
-for k in ind_dict.keys():
-    # use Andrew's package which allows clustering using Spearman distances (sch.linkage, and pdist do not support this for some reason, unlike Matlab)
-    (dMat[k], Z_struct[k], dend[k]) = hcp.computeHCluster(arr_df[post_inds][ind_dict[k]], method='complete', metric='spearman')
-    clusters[k] = sch.fcluster(Z_struct[k], t=num_clusters, criterion='maxclust')
-
-    # compute cluster homogeneity and completness (purity and accuracy) for treatment label and for infection status:
-    pred_treatment_labels[k] = np.zeros(shape=(arr_df[post_inds].shape[0]))
-    for i in np.arange(1, num_clusters+1):
-        c_inds = np.where(clusters[k] == i)
-        val, ind = scipy.stats.mode(arr_df[post_inds]['group_label'].values[c_inds])
-        pred_treatment_labels[k][c_inds] = val[0]
-
-    cluster_treatment_stats[k] = metrics.homogeneity_completeness_v_measure(arr_df[post_inds]['group_label'].values, pred_treatment_labels[k])
-
-# compute pairwise statistics of clusters using alternate assays as values:
-prot_stats = {}
-for p in ['SHA_ha', 'SHA_na']:
-    p_values = {assay: np.zeros(shape=(num_clusters, num_clusters)) for assay in assays}
-    q_values = {assay: np.zeros(shape=(num_clusters, num_clusters)) for assay in assays}
-    stats_df = pd.DataFrame()
-
-    for assay in assays:
-        res = []
-        c_inds = []
-        for i in np.arange(num_clusters):
-            for j in np.arange(i + 1, num_clusters):
-                res.append(scipy.stats.ranksums(arr_df[assay].loc[clusters[p] == i + 1], arr_df[assay].loc[clusters[p] == j + 1]))
-                c_inds.append((i + 1, j + 1))
-        if(stats_df.empty):
-            stats_df = pd.DataFrame(index=c_inds)
-        z_vals, p_vals = zip(*res)
-        reject, q_vals, temp1, temp2 = sm.stats.multipletests(p_vals, method='fdr_bh', alpha=0.2)
-        stats_df[assay + '_p_vals'] = p_vals
-        stats_df[assay + '_q_vals'] = q_vals
-        prot_stats[p] = stats_df
-
-# identify all pairs of clusters with q-values < 0.2:
-sig_df_HA = prot_stats['SHA_ha'].loc[(prot_stats['SHA_ha']['HAI_H7_q_vals'] < 0.2) | (prot_stats['SHA_ha']['MN_H7_q_vals'] < 0.2)]
-sig_df_NA = prot_stats['SHA_na'].loc[(prot_stats['SHA_na']['HAI_H7_q_vals'] < 0.2) | (prot_stats['SHA_na']['MN_H7_q_vals'] < 0.2)]
-
-
-# compute one way anova over clustering solutions:
-for p in ['SHA_ha', 'SHA_na']:
-    for assay in assays:
-        group_samples = {}
-        for i in np.arange(1, num_clusters + 1):
-            group_samples[i] = np.asarray(arr_df[assay].loc[clusters[p] == i])
-            group_samples[i] = group_samples[i][~np.isnan(group_samples[i])]
-        (F, p_anova) = scipy.stats.f_oneway(*group_samples.values())
-        print(p, assay, F, p_anova)
+# cluster obese and WT by adjuvant:
+for a in adjuvants:
+    curr_inds = group_inds['Ob_post_' + a].append(group_inds['WT_post_' + a])
+    dMat[a] = {}
+    Z_struct[a] = {}
+    dend[a] = {}
+    clusters[a] = {}
+    for p in ['SHA_ha', 'SHA_na']:
+        # use Andrew's package which allows clustering using Spearman distances (sch.linkage, and pdist do not support this for some reason, unlike Matlab)
+        (dMat[a][p], Z_struct[a][p], dend[a][p]) = hcp.computeHCluster(arr_df.loc[curr_inds][ind_dict[p]], method='complete', metric='spearman')
+        clusters[a][p] = sch.fcluster(Z_struct[a][p], t=num_clusters, criterion='maxclust')
 
 
 # compute ranksum p-values for comparisons of HAI, microneut assays for the Shanghai and Cal strains comparing different treatment groups across the same adjuvant
@@ -283,6 +243,20 @@ for assay in assays + arr_summary_stats:
 sorted_inds = np.argsort(stats_df.columns)
 stats_df = stats_df[stats_df.columns[sorted_inds]]
 stats_df.filter(regex='p_vals').to_csv(path_or_buf=SAVE_PATH + "Ob_vs_WT_stats_by_group.csv")
+
+
+# analyze single antigens:
+
+# filter antigens based on percent responders:
+filter_dict = amutils.compute_label_blinded_antigen_filters(arr_df, ind_dict, filter_threshold=0.4, pos_threshold=2000)
+sig_antigens = amutils.compare_single_antigens_by_groups(arr_df, ['Ob_post_AS03', 'WT_post_AS03'], filter_dict, pos_threshold=2000)
+
+# now generate dataframes for sig antigens from proteins of interest:
+writer = pd.ExcelWriter(FIG_PATH + 'sig_antigen_stats.xlsx')
+for p, p_name in zip(prot_names, prot_strs):
+    sig_antigens_df = pd.DataFrame(sig_antigens[p], columns=['Antigen', 'Fisher Counts', 'p-value', 'adjusted p-value', 'q-value'])
+    sig_antigens_df.to_excel(writer, sheet_name=p_name)
+writer.save()
 
 
 #  Figure 1: PBS responses of the groups are different
@@ -387,115 +361,23 @@ for assay in arr_summary_stats:
         f.savefig(filename, dpi=1000)
 
 
-
-# Clustering plots:
-
-#  # plot boxplots of all clusters
-# for p in ['SHA_ha', 'SHA_na']:
-#     for assay in assays:
-#         f = plt.figure()
-#         f.set_size_inches(18, 11)
-#         mbp.myboxplot_by_labels(arr_df[post_inds][assay], clusters[p])
-#         plt.title("".join([p, " clusters ", assay]))
-#         plt.xlabel('Cluster #')
-#         filename = "".join([FIG_PATH, p, "_", assay, "_boxplots_by_clusters_n_", str(num_clusters), ".png"])
-#         f.savefig(filename, dpi=200)
-
-
-# # Plot figures for a given clustering solution - currently only performed for the Shanghai strain:
-# for p in ['SHA_ha', 'SHA_na']:
-#     f, axarr = plt.subplots(num_clusters, 1)
-#     f.set_tight_layout(True)
-#     f.set_size_inches(18, 11)
-#     # plot clusters
-#     for i in np.arange(num_clusters):
-
-#         axarr[i].plot(np.arange(len(ind_dict[p])), arr_df[post_inds][ind_dict[p]].loc[clusters[p] == i + 1].T)
-#         axarr[i].set_title(p + " cluster " + str(i + 1) + " (n = " + str(len(np.where([clusters[p] == i + 1])[0])) + ")")
-#         axarr[i].set_yticks([])
-
-#     filename = "".join([FIG_PATH, p, "_responses_by_clusters_n_", str(num_clusters), ".png"])
-#     f.savefig(filename, dpi=200)
-
-
-
-
-# # Plot median response per cluster
-# for p in ['SHA_ha', 'SHA_na']:
-#     f, axarr = plt.subplots(num_clusters, 1)
-#     f.set_tight_layout(True)
-#     f.set_size_inches(18, 11)
-#     # plot clusters
-#     for i in np.arange(num_clusters):
-
-#         axarr[i].bar(np.arange(len(ind_dict[p])), np.median(arr_df[post_inds][ind_dict[p]].loc[clusters[p] == i + 1].T, axis=1))
-#         axarr[i].set_title(p + " cluster " + str(i + 1) + " (n = " + str(len(np.where([clusters[p] == i + 1])[0])) + ")")
-#         axarr[i].set_yticks([])
-#         axarr[i].set_ylim(0, 20000)
-
-#     filename = "".join([FIG_PATH, p, "_median_responses_by_clusters_n_", str(num_clusters), ".png"])
-#     f.savefig(filename, dpi=200)
-
-# # Plot median response per pairs of clusters of interest
-# for p in ['SHA_ha']:
-
-#     ind = np.arange(len(ind_dict[p]))+1  # the x locations for the groups
-#     width = 0.3       # the width of the bars
-
-#     colors = ['r','b']
-#  # plot pairs of clusters with significant differences
-#     for i in sig_arr_df_HA.index:
-
-#         f, ax = plt.subplots()
-#         f.set_tight_layout(True)
-#         f.set_size_inches(18,11)
-
-#         #med_resp = np.median(arr_df[ind_dict[p]].loc[clusters[p] == i[0]].T, axis=1)
-#         rects1 = ax.bar(ind, med_resp[:,i[0]-1], width, color=colors[0])
-#         #med_resp = np.median(arr_df[ind_dict[p]].loc[clusters[p] == i[1]].T, axis=1)
-#         rects2 = ax.bar(ind+width, med_resp[:,i[1]-1], width, color=colors[1])
-#         ax.legend(i)
-#         ax.set_title(p + " median responses of clusters")
-#         filename = "".join([FIG_PATH, p,  "_bar_median_responses_clusters_", str(i[0]), "_",str(i[1]), ".png"])
-#         f.savefig(filename, dpi=200)
-
-
-# plot correlation matrix of HA and NA clustering on Shanghai
-# for p in ['SHA_ha', 'SHA_na']:
-
-#     col_ind = np.argsort(clusters[p])
-#     f = plt.figure()
-#     ax_matrix = f.add_axes([0.3,0.1,0.6,0.6])
-#     my_norm = mpl.colors.Normalize(vmin=0.4, vmax=1)
-#     im = ax_matrix.matshow(dMat[p][colInd,:][:,colInd].T,aspect='auto', origin='upper', cmap=cm.RdBu_r,norm=my_norm)
-#     ax_matrix.set_xticks([])
-
-#     c_inds = []
-#     c_inds = [len(np.where(clusters[p]==i)[0]) for i in np.arange(1,num_clusters+1)]
-#     ax_matrix.set_yticks(np.cumsum(c_inds)[:-1])
-#     ax_matrix.set_xticks(np.cumsum(c_inds)[:-1])
-#     # Plot colorbar.
-#     ax_color = f.add_axes([0.91,0.1,0.02,0.6])
-#     plt.colorbar(im, cax=ax_color)
-
-# # plot samples longitudinaly for each ptid:
-# ptids = arr_df.index.map(lambda s: s[1:])
-# uniq_ptids = np.unique(ptids)
-# for p in uniq_ptids:
-#     ptid_inds = plt.mlab.find(ptids == p)
-#     if len(ptid_inds) == 1:
-#         continue
-#     resp_df = arr_df.iloc[ptid_inds][ind_dict['SHA_ha']]
-#     timepoints = arr_df.iloc[ptid_inds]['group']
-#     amp.plot_longitudinal_responses_by_ptid(resp_df, ptid=p, timepoint_labels=timepoints, plot_type='line', subplot_flag=False)
-
-
+# Figure 4, 5 and 6 - clustering dendrograms, median responses and summary stats of WT vs. Obese for each group:
+for a in ['Vac', 'AS03']:
+    curr_inds = group_inds['Ob_post_' + a].append(group_inds['WT_post_' + a])
+    amp.plot_clustering_dendrograms(Z_struct=Z_struct[a], prot_names=['SHA_ha'], labels=arr_df.loc[curr_inds].group, fig_prefix=a + '_', fig_path=FIG_PATH)
+    amp.plot_median_responses_by_clusters(arr_df=arr_df.loc[curr_inds], antigen_inds=ind_dict['SHA_ha'], num_clusters=4,
+                                          clusters=clusters[a]['SHA_ha'], y_lims=[0, 25000], fig_prefix=a, fig_path=FIG_PATH)
+    #amp.plot_raw_responses_by_clusters(arr_df=arr_df.loc[curr_inds], antigen_inds=ind_dict['SHA_ha'], num_clusters=4, clusters=clusters[a]['SHA_ha'])
+    amp.plot_summary_stat_boxplots_by_clusters(arr_df=arr_df.loc[curr_inds], clusters=clusters[a], prot_names=['SHA_ha'], 
+                                               arr_summary_stats=['H7_breadth', 'H7_mag'], fig_prefix = a + '_', fig_path=FIG_PATH)
+    
 
 
 # # plot correlation matrix with dendrogram overlayed:
 # for p in ['SHA_ha', 'SHA_na']:
-#     colInd = hcp.plotHColCluster(arr_df[post_inds][ind_dict[p]].T, method='complete', metric='spearman', titleStr=p, vRange=(0, 1))
-#     # \col_labels=arr_df[post_inds].group)
+#     f = plt.figure()
+#     colInd = hcp.plotHColCluster(arr_df[post_inds][ind_dict[p]].T, method='complete', metric='spearman', titleStr=p, vRange=(0, 1),
+#                                  col_labels=arr_df[post_inds].group)
 #     f = plt.gcf()
 #     filename = "".join([FIG_PATH + p + "postBoost_clustering_matrix_and_dendrogram"])
 #     f.savefig(filename, dpi=200)

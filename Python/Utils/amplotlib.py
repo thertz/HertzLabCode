@@ -387,7 +387,7 @@ def plot_clustering_dendrograms(Z_struct, prot_names, labels, fig_path=None, ori
             filename = "".join([fig_path, fig_prefix, p, "_dendrograms.png"])
             f.savefig(filename, dpi=200)
 
-def plot_summary_stat_boxplots_by_clusters(arr_df, clusters, prot_names, arr_summary_stats, sample_inds=None, fig_path=None, fig_size=(11,11)):
+def plot_summary_stat_boxplots_by_clusters(arr_df, clusters, prot_names, arr_summary_stats, sample_inds=None, fig_prefix=None, fig_path=None, fig_size=(11,11)):
     """ 
     Plot boxplots of summary stats by clusters
     
@@ -421,7 +421,7 @@ def plot_summary_stat_boxplots_by_clusters(arr_df, clusters, prot_names, arr_sum
             num_clusters = len(np.unique(clusters[p]))
             # save to file only if save_flag is on
             if fig_path is not None:
-                filename = "".join([fig_path, p, "_", assay, "_boxplots_by_clusters_n_", str(num_clusters), ".png"])
+                filename = "".join([fig_path, fig_prefix, p, "_", assay, "_boxplots_by_clusters_n_", str(num_clusters), ".png"])
                 f.savefig(filename, dpi=200)
 
 
@@ -509,7 +509,7 @@ def plot_median_responses_by_exp_groups(group_medians, exp_groups, prot_str, fig
         f.savefig(filename, dpi=200)
 
 
-def plot_median_responses_by_clusters(arr_df, antigen_inds, num_clusters, clusters, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 60000]):
+def plot_median_responses_by_clusters(arr_df, antigen_inds, num_clusters, clusters, fig_path=None, fig_prefix='', fig_size=(18,11), y_lims=[0, 60000]):
     """
     plot bar plot of median responses by clusters.
     """ 
@@ -520,7 +520,7 @@ def plot_median_responses_by_clusters(arr_df, antigen_inds, num_clusters, cluste
     for i in np.arange(num_clusters):
         axarr[i].bar(np.arange(len(antigen_inds)), np.median(arr_df[antigen_inds].loc[clusters == i+1].T, axis=1))
         axarr[i].set_title(fig_prefix + " cluster " + str(i+1) + " (n = " + str(len(np.where([clusters == i+1])[0])) + ")")
-        axarr[i].set_yticks([])
+        axarr[i].set_yticks(y_lims)
         axarr[i].set_ylim(y_lims)
 
     # save to file only if save_flag is on
@@ -529,7 +529,7 @@ def plot_median_responses_by_clusters(arr_df, antigen_inds, num_clusters, cluste
         filename = "".join([fig_path, fig_prefix,  "_median_responses_by_clusters_n_", str(num_clusters), ".png"])
         f.savefig(filename, dpi=200)
 
-def plot_raw_responses_by_clusters(arr_df, antigen_inds, num_clusters, clusters, fig_path=None, fig_prefix=None, fig_size=(18,11), y_lims=[0, 60000]):
+def plot_raw_responses_by_clusters(arr_df, antigen_inds, num_clusters, clusters, fig_path=None, fig_prefix='', fig_size=(18,11), y_lims=[0, 60000]):
     """
     plot bar plot of median responses by clusters.
     """ 
