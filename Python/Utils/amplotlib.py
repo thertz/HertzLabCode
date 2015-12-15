@@ -473,12 +473,19 @@ def plot_responses_by_exp_groups(arr_df, antigen_inds, exp_groups, fig_path=None
     f.set_size_inches(fig_size)
 
     # plot groups
-    for i in np.arange(num_groups):
+    if len(exp_groups) == 1:
+        i=0
+        axarr.plot(np.arange(len(antigen_inds)), arr_df[antigen_inds].iloc[np.where(arr_df['group'] == exp_groups[i])].T)
+        axarr.set_title(fig_prefix + " " + exp_groups[i] + " (n = " + str(len(np.where(arr_df['group'] == exp_groups[i])[0])) + ")")
+        axarr.set_yticks([])
+        axarr.set_ylim(y_lims)
+    else:
+        for i in np.arange(num_groups):
 
-        axarr[i].plot(np.arange(len(antigen_inds)), arr_df[antigen_inds].iloc[np.where(arr_df['group'] == exp_groups[i])].T)
-        axarr[i].set_title(fig_prefix + " " + exp_groups[i] + " (n = " + str(len(np.where(arr_df['group'] == exp_groups[i])[0])) + ")")
-        axarr[i].set_yticks([])
-        axarr[i].set_ylim(y_lims)
+            axarr[i].plot(np.arange(len(antigen_inds)), arr_df[antigen_inds].iloc[np.where(arr_df['group'] == exp_groups[i])].T)
+            axarr[i].set_title(fig_prefix + " " + exp_groups[i] + " (n = " + str(len(np.where(arr_df['group'] == exp_groups[i])[0])) + ")")
+            axarr[i].set_yticks([])
+            axarr[i].set_ylim(y_lims)
 
     # save to file only if save_flag is on
     if fig_path is not None:
@@ -495,10 +502,15 @@ def plot_median_responses_by_exp_groups(group_medians, exp_groups, prot_str, fig
     f, axarr = plt.subplots(len(exp_groups),1)
     f.set_size_inches(fig_size)
     
-    for i in np.arange(len(exp_groups)):
-        rects1 = axarr[i].bar(np.arange(len(group_medians[(exp_groups[i], prot_str)])), group_medians[(exp_groups[i], prot_str)], width=width, color=colors[i])
-        axarr[i].set_title(exp_groups[i] + " " + prot_str)
-        axarr[i].set_ylim(y_lims)
+    if len(exp_groups) == 1:
+        rects1 = axarr.bar(np.arange(len(group_medians[(exp_groups[0], prot_str)])), group_medians[(exp_groups[0], prot_str)], width=width, color=colors[0])
+        axarr.set_title(exp_groups[0] + " " + prot_str)
+        axarr.set_ylim(y_lims)
+    else:
+        for i in np.arange(len(exp_groups)):
+            rects1 = axarr[i].bar(np.arange(len(group_medians[(exp_groups[i], prot_str)])), group_medians[(exp_groups[i], prot_str)], width=width, color=colors[i])
+            axarr[i].set_title(exp_groups[i] + " " + prot_str)
+            axarr[i].set_ylim(y_lims)
 
 
     if fig_path is not None:    
