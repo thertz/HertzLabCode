@@ -255,6 +255,7 @@ sig_antigens = amutils.compare_single_antigens_by_groups(arr_df, ['Ob_post_AS03'
 writer = pd.ExcelWriter(FIG_PATH + 'sig_antigen_stats.xlsx')
 for p, p_name in zip(prot_names, prot_strs):
     sig_antigens_df = pd.DataFrame(sig_antigens[p], columns=['Antigen', 'Fisher Counts', 'p-value', 'adjusted p-value', 'q-value'])
+    
     sig_antigens_df.to_excel(writer, sheet_name=p_name)
 writer.save()
 
@@ -371,6 +372,17 @@ for a in ['Vac', 'AS03']:
     amp.plot_summary_stat_boxplots_by_clusters(arr_df=arr_df.loc[curr_inds], clusters=clusters[a], prot_names=['SHA_ha'], 
                                                arr_summary_stats=['H7_breadth', 'H7_mag'], fig_prefix = a + '_', fig_path=FIG_PATH)
     
+
+
+# Export all post data to excel:
+# now generate dataframes for sig antigens from proteins of interest:
+writer = pd.ExcelWriter(FIG_PATH + 'H7H9_WT_OB_raw_data.xlsx')
+for p, p_name in zip(prot_names, prot_strs):
+    curr_df = arr_df.loc[time_dict['Post']][ind_dict[p]]
+    
+    curr_df.to_excel(writer, sheet_name='post_' + p_name)
+writer.save()
+
 
 
 # # plot correlation matrix with dendrogram overlayed:

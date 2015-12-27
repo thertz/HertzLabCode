@@ -199,8 +199,8 @@ def plot_reproducibility_plots(resp_mat, ptid_labels=None, title_str=None,
     fig_handles[1].set_size_inches(11, 11)
     return fig_handles
 
-def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=None, plot_type='line',
-                                        subplot_flag=False):
+def plot_longitudinal_responses_by_ptid(resp_mat, prot_name=None, ptid=None, timepoint_labels=None, plot_type='line',
+                                        subplot_flag=False, fig_size=(18, 11)):
     """
     plot responses of a single ptid from longitudinal timepoints
     
@@ -238,7 +238,7 @@ def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=No
         num_plots = 1
     f, axarr = plt.subplots(num_plots,1)
     f.set_tight_layout(True)
-    f.set_size_inches(18,11)
+    f.set_size_inches(fig_size)
 
     for i in np.arange(N):
         
@@ -254,7 +254,9 @@ def plot_longitudinal_responses_by_ptid(resp_mat, ptid=None, timepoint_labels=No
     
         if ptid is None:
             ptid = ""
-        curr_ax.set_title("longitudinal response for ptid " + ptid)
+        if prot_name is None:
+            prot_name = ""
+        curr_ax.set_title(prot_name + " longitudinal response for ptid " + ptid)
         curr_ax.set_yticks([])
         curr_ax.set_ylim(0, 60000)
         if subplot_flag:
